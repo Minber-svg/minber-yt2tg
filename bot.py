@@ -150,7 +150,18 @@ def main() -> int:
         print("TELEGRAM_BOT_TOKEN және TELEGRAM_CHAT_ID керек", file=sys.stderr)
         return 1
 
-    videos = parse_feed(load_feed())
+    try:
+        feed = load_feed()
+    except OSError as e:
+        # YouTube RSS кейде уақытша істемей қалады (404/500 қателері, timeout).
+        # Мұндай кезде қатемен тоқтамаймыз — келесі іске қосылуда қайта тексереміз.
+        print(f"ЕСКЕРТУ: YouTube RSS уақытша қолжетімсіз ({e}). Келесі жолы қайталанады.")
+        return 0
+    try:
+        videos = parse_feed(feed)
+    except ET.ParseError as e:
+        print(f"ЕСКЕРТУ: YouTube RSS дұрыс оқылмады ({e}). Келесі жолы қайталанады.")
+        return 0
     state = load_state()
     posted = set(state["posted"])
 
